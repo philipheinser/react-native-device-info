@@ -135,11 +135,6 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
       e.printStackTrace();
     }
 
-    try {
-      if (Class.forName("com.google.android.gms.iid.InstanceID") != null) {
-        constants.put("instanceId", com.google.android.gms.iid.InstanceID.getInstance(this.reactContext).getId());
-      }
-    } catch (ClassNotFoundException e) {}
     constants.put("serialNumber", Build.SERIAL);
     constants.put("deviceName", deviceName);
     constants.put("systemName", "Android");
