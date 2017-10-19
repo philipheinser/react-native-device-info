@@ -38,15 +38,19 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
     super(reactContext);
 
     this.reactContext = reactContext;
-
-
-    WifiManager manager = (WifiManager) reactContext.getSystemService(Context.WIFI_SERVICE);
-    this.wifiInfo = manager.getConnectionInfo();
   }
 
   @Override
   public String getName() {
     return "RNDeviceInfo";
+  }
+
+  private WifiInfo getWifiInfo() {
+    if ( this.wifiInfo == null ) {
+      WifiManager manager = (WifiManager) reactContext.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+      this.wifiInfo = manager.getConnectionInfo();
+    }
+    return this.wifiInfo;
   }
 
   private String getCurrentLanguage() {
@@ -87,19 +91,19 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void isPinOrFingerprintSet(Callback callback) {
-    KeyguardManager keyguardManager = (KeyguardManager) this.reactContext.getSystemService(Context.KEYGUARD_SERVICE); //api 16+
+    KeyguardManager keyguardManager = (KeyguardManager) this.reactContext.getApplicationContext().getSystemService(Context.KEYGUARD_SERVICE); //api 16+
     callback.invoke(keyguardManager.isKeyguardSecure());
   }
 
   @ReactMethod
   public void getIpAddress(Promise p) {
-    String ipAddress = Formatter.formatIpAddress(wifiInfo.getIpAddress());
+    String ipAddress = Formatter.formatIpAddress(getWifiInfo().getIpAddress());
     p.resolve(ipAddress);
   }
 
   @ReactMethod
   public void getMacAddress(Promise p) {
-    String macAddress = wifiInfo.getMacAddress();
+    String macAddress = getWifiInfo().getMacAddress();
     p.resolve(macAddress);
   }
 
@@ -154,10 +158,11 @@ public class RNDeviceModule extends ReactContextBaseJavaModule {
     constants.put("timezone", TimeZone.getDefault().getID());
     constants.put("isEmulator", this.isEmulator());
     constants.put("isTablet", this.isTablet());
-    if (getCurrentActivity().checkCallingOrSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED ||
+    if (getCurrentActivity() != null &&
+          (getCurrentActivity().checkCallingOrSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED ||
             getCurrentActivity().checkCallingOrSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED ||
-            getCurrentActivity().checkCallingOrSelfPermission("android.permission.READ_PHONE_NUMBERS") == PackageManager.PERMISSION_GRANTED) {
-        TelephonyManager telMgr = (TelephonyManager) this.reactContext.getSystemService(Context.TELEPHONY_SERVICE);
+            getCurrentActivity().checkCallingOrSelfPermission("android.permission.READ_PHONE_NUMBERS") == PackageManager.PERMISSION_GRANTED)) {
+        TelephonyManager telMgr = (TelephonyManager) this.reactContext.getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);
         constants.put("phoneNumber", telMgr.getLine1Number());
     }
     return constants;
